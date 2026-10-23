@@ -21,6 +21,8 @@ Editable diagrams are available in `docs/`.
 
 ## Database design
 
+![Relational ER Model](docs/ERD.svg)
+
 ### MariaDB
 
 The relational model contains eight main entities:
@@ -253,6 +255,7 @@ INF2003-Pokemon-TCG/
 │   ├── ARCHITECTURE.md
 │   ├── DESIGN_NOTES.md
 │   ├── ERD.drawio
+│   ├── ERD.svg
 │   ├── QUERY_CATALOG.md
 │   ├── System_Architecture.drawio
 │   └── System_Architecture.svg
@@ -278,5 +281,6 @@ INF2003-Pokemon-TCG/
 - [Architecture](docs/ARCHITECTURE.md)
 - [Database design notes](docs/DESIGN_NOTES.md)
 - [Query catalog](docs/QUERY_CATALOG.md)
+- [ER diagram preview](docs/ERD.svg)
 - [Editable ER diagram](docs/ERD.drawio)
 - [Editable system architecture diagram](docs/System_Architecture.drawio)
