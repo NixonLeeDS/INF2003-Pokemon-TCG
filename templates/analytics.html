@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Analytics</h2>
+<form method="get" class="inline-form"><label>User<select name="user_id">{% for u in all_users %}<option value="{{ u.user_id }}" {% if u.user_id==user_id %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label><label>Nested keyword<input name="keyword" value="{{ keyword }}"></label><label>Min attack damage<input name="min_damage" type="number" value="{{ min_damage }}"></label><button>Run</button></form>
+<h3>MariaDB collection summary view</h3>
+<table><thead><tr><th>User</th><th>Unique cards</th><th>Total cards</th><th>Tradeable</th><th>Sets</th></tr></thead><tbody>{% for r in summary %}<tr><td>{{ r.username }}</td><td>{{ r.unique_cards }}</td><td>{{ r.total_cards }}</td><td>{{ r.tradeable_cards }}</td><td>{{ r.sets_collected }}</td></tr>{% endfor %}</tbody></table>
+<h3>Set completion</h3>
+<table><thead><tr><th>Set</th><th>Owned</th><th>Total</th><th>%</th></tr></thead><tbody>{% for r in completion[:20] %}<tr><td>{{ r.set_name }}</td><td>{{ r.owned_unique }}</td><td>{{ r.set_total }}</td><td>{{ r.completion_pct }}</td></tr>{% endfor %}</tbody></table>
+{% if mongo_error %}<div class="flash error">MongoDB analytics unavailable: {{ mongo_error }}</div>{% endif %}
+<h3>MongoDB weakness aggregation</h3><table><thead><tr><th>Weakness</th><th>Cards</th></tr></thead><tbody>{% for r in weakness %}<tr><td>{{ r._id }}</td><td>{{ r.card_count }}</td></tr>{% endfor %}</tbody></table>
+<h3>MongoDB average attack count by type</h3><table><thead><tr><th>Type</th><th>Avg attacks</th><th>Cards</th></tr></thead><tbody>{% for r in avg_attacks %}<tr><td>{{ r._id }}</td><td>{{ '%.2f'|format(r.avg_attacks) }}</td><td>{{ r.cards }}</td></tr>{% endfor %}</tbody></table>
+<h3>MongoDB legality aggregation</h3><table><thead><tr><th>Standard</th><th>Expanded</th><th>Cards</th></tr></thead><tbody>{% for r in legality[:20] %}<tr><td>{{ r._id.standard }}</td><td>{{ r._id.expanded }}</td><td>{{ r.card_count }}</td></tr>{% endfor %}</tbody></table>
+<h3>Nested keyword: {{ keyword }}</h3><ul>{% for r in keyword_results %}<li>{{ r.name }} — {{ r.set_name }}</li>{% endfor %}</ul>
+<h3>Attacks with damage ≥ {{ min_damage }}</h3><ul>{% for r in high_damage %}<li>{{ r.name }} — {{ r.attack.name }} ({{ r.numeric_damage }})</li>{% endfor %}</ul>
+{% endblock %}
