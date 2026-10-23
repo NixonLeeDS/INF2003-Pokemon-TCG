@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}{{ card.card_name }}{% endblock %}
+{% block content %}
+<h2>{{ card.card_name }}</h2>
+<div class="two-col">
+<section><h3>MariaDB structured data</h3><dl>
+<dt>Card ID</dt><dd>{{ card.card_id }}</dd><dt>Set</dt><dd>{{ card.set_name }} ({{ card.set_id }})</dd>
+<dt>Types</dt><dd>{{ card.types or '-' }}</dd><dt>HP</dt><dd>{{ card.hp or '-' }}</dd><dt>Rarity</dt><dd>{{ card.rarity or '-' }}</dd>
+<dt>Artist</dt><dd>{{ card.artist or '-' }}</dd><dt>Evolution</dt><dd>{{ card.evolves_from or '-' }}</dd>
+</dl></section>
+<section><h3>MongoDB nested data</h3>
+{% if nested %}
+<h4>Abilities</h4><pre>{{ nested.abilities | tojson(indent=2) }}</pre>
+<h4>Attacks</h4><pre>{{ nested.attacks | tojson(indent=2) }}</pre>
+<h4>Weaknesses / Resistances</h4><pre>{{ {'weaknesses': nested.weaknesses, 'resistances': nested.resistances} | tojson(indent=2) }}</pre>
+<h4>Legalities</h4><pre>{{ nested.legalities | tojson(indent=2) }}</pre>
+{% else %}<p>MongoDB document not loaded yet.</p>{% endif %}
+</section></div>
+{% endblock %}
