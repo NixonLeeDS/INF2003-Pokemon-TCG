@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Trade Matching</h2>
+<form method="get"><label>User <select name="user_id" onchange="this.form.submit()">{% for u in all_users %}<option value="{{ u.user_id }}" {% if u.user_id==user_id %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label></form>
+<h3>Wishlist cards available from other users (5-table JOIN)</h3>
+<table><thead><tr><th>Wanted card</th><th>Set</th><th>Priority</th><th>Owner</th><th>Available</th></tr></thead><tbody>{% for r in matches %}<tr><td>{{ r.card_name }}</td><td>{{ r.set_name }}</td><td>{{ r.priority }}</td><td>{{ r.owner_username }}</td><td>{{ r.trade_quantity }}</td></tr>{% endfor %}</tbody></table>
+<h3>Reciprocal matches</h3>
+<table><thead><tr><th>Partner</th><th>You want</th><th>They want</th></tr></thead><tbody>{% for r in reciprocal %}<tr><td>{{ r.partner_username }}</td><td>{{ r.you_want }}</td><td>{{ r.they_want }}</td></tr>{% endfor %}</tbody></table>
+{% endblock %}
