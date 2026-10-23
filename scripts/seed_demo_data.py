@@ -72,6 +72,9 @@ def main():
                 wishlists,
             )
         conn.commit()
+        print(f"Demo trade: requester={users['nixon']}, recipient={users['brendan']}")
+        print(f"Requester gives {cards[0]}:1; recipient gives {cards[5]}:1")
+        print("Rerunning the seed overwrites these demo collection quantities; use a disposable database.")
         print("Seeded demo users, collections and wishlists with guaranteed trade-match overlap.")
     except Exception:
         conn.rollback()

@@ -1,11 +1,15 @@
 import os
+import secrets
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class Config:
-    SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev-only-change-me")
-    DEBUG = os.getenv("FLASK_DEBUG", "1") == "1"
+    SECRET_KEY = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(32)
+    MAX_CONTENT_LENGTH = 64 * 1024
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    DEBUG = os.getenv("FLASK_DEBUG", "0") == "1"
 
     MARIADB_HOST = os.getenv("MARIADB_HOST", "127.0.0.1")
     MARIADB_PORT = int(os.getenv("MARIADB_PORT", "3306"))

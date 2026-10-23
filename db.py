@@ -15,6 +15,9 @@ def mysql_connection(with_database=True, autocommit=True):
         "charset": "utf8mb4",
         "cursorclass": pymysql.cursors.DictCursor,
         "autocommit": autocommit,
+        "connect_timeout": 3,
+        "read_timeout": 10,
+        "write_timeout": 10,
     }
     if with_database:
         kwargs["database"] = Config.MARIADB_DATABASE
@@ -32,5 +35,5 @@ def mysql_cursor(autocommit=True):
 
 
 def mongo_database():
-    client = MongoClient(Config.MONGODB_URI)
+    client = MongoClient(Config.MONGODB_URI, serverSelectionTimeoutMS=3000, connectTimeoutMS=3000, socketTimeoutMS=10000)
     return client, client[Config.MONGODB_DATABASE]

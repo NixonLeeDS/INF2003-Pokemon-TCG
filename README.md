@@ -194,6 +194,8 @@ Then run:
 python -m scripts.bootstrap
 ```
 
+**Bootstrap recreates all eight relational tables and removes their existing data. Use a disposable demonstration database.**
+
 The bootstrap process:
 
 1. recreates the MariaDB project schema
@@ -236,7 +238,7 @@ http://127.0.0.1:5000
 4. Add cards to another user's wishlist.
 5. Open **Trade Matches** to demonstrate the five-table join.
 6. Demonstrate reciprocal trade matching.
-7. Create a trade and complete it.
+7. Create a trade, accept as the recipient, then complete as either participant.
 8. Verify that both collections update atomically.
 9. Open **Analytics** to demonstrate the MongoDB aggregation queries.
 
@@ -284,3 +286,30 @@ INF2003-Pokemon-TCG/
 - [ER diagram preview](docs/ERD.svg)
 - [Editable ER diagram](docs/ERD.drawio)
 - [Editable system architecture diagram](docs/System_Architecture.drawio)
+
+## Verification and submission evidence
+
+```bash
+python -m unittest discover -s tests -v
+python -m compileall -q app.py config.py db.py services scripts tests
+python -m scripts.explain_queries --user-id 1
+```
+
+The tests use mocked database connections and check input rules, all trade-state/
+actor combinations, rollback paths, CSRF protection, and template compilation.
+They do not establish live database concurrency correctness.
+
+Open **Status** (`/health`) to check each store independently; outages return HTTP
+503. The deterministic seed prints the actual participant IDs and a valid trade
+pair, avoiding assumptions about auto-increment IDs.
+
+See [submission checklist](docs/SUBMISSION_CHECKLIST.md) for live transaction,
+performance, aggregation, and screenshot evidence still to collect.
+See [transaction rules](docs/TRANSACTIONS.md) for state transitions and locking.
+
+This is a local multi-user demonstration, with explicit user selection rather
+than authentication. Participant checks enforce workflow roles for the selected
+user; they do not prove the caller's identity. Keep it bound to localhost.
+Set a random `FLASK_SECRET_KEY` in `.env`; debug mode defaults to off. POST forms
+use session CSRF tokens. Environment variants, private keys, logs and raw datasets
+are ignored; `.env.example` is the tracked configuration template.

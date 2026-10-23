@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from db import mysql_connection, mysql_cursor
+from services.validation import integer, card_identifier, trade_items, transition
 
 
 def list_users():
@@ -79,6 +80,10 @@ def collection(user_id):
 
 
 def upsert_collection(user_id, card_id, quantity=1, trade_quantity=0):
+    user_id = integer(user_id, "User")
+    card_id = card_identifier(card_id)
+    quantity = integer(quantity, "Owned quantity")
+    trade_quantity = integer(trade_quantity, "Tradeable quantity", 0, quantity)
     with mysql_cursor() as (_, cur):
         cur.execute(
             """
@@ -91,6 +96,8 @@ def upsert_collection(user_id, card_id, quantity=1, trade_quantity=0):
 
 
 def remove_collection(user_id, card_id):
+    user_id = integer(user_id, "User")
+    card_id = card_identifier(card_id)
     with mysql_cursor() as (_, cur):
         cur.execute("DELETE FROM collection_item WHERE user_id=%s AND card_id=%s", (user_id, card_id))
 
@@ -112,6 +119,9 @@ def wishlist(user_id):
 
 
 def upsert_wishlist(user_id, card_id, priority=3):
+    user_id = integer(user_id, "User")
+    card_id = card_identifier(card_id)
+    priority = integer(priority, "Priority", 1, 5)
     with mysql_cursor() as (_, cur):
         cur.execute(
             """
@@ -124,6 +134,8 @@ def upsert_wishlist(user_id, card_id, priority=3):
 
 
 def remove_wishlist(user_id, card_id):
+    user_id = integer(user_id, "User")
+    card_id = card_identifier(card_id)
     with mysql_cursor() as (_, cur):
         cur.execute("DELETE FROM wishlist_item WHERE user_id=%s AND card_id=%s", (user_id, card_id))
 
@@ -190,9 +202,23 @@ def reciprocal_trade_matches(user_id):
 
 
 def create_trade(requester_id, recipient_id, requester_items, recipient_items):
+    requester_id = integer(requester_id, "Requester")
+    recipient_id = integer(recipient_id, "Recipient")
+    if requester_id == recipient_id:
+        raise ValueError("Choose two different participants.")
+    requester_items = trade_items(requester_items)
+    recipient_items = trade_items(recipient_items)
     conn = mysql_connection(autocommit=False)
     try:
         with conn.cursor() as cur:
+            for owner, card, qty in sorted(
+                [(requester_id, c, q) for c, q in requester_items]
+                + [(recipient_id, c, q) for c, q in recipient_items]
+            ):
+                cur.execute("SELECT quantity, trade_quantity FROM collection_item WHERE user_id=%s AND card_id=%s FOR UPDATE", (owner, card))
+                source = cur.fetchone()
+                if not source or min(source["quantity"], source["trade_quantity"]) < qty:
+                    raise ValueError(f"User {owner} has insufficient tradeable copies of {card}.")
             cur.execute(
                 "INSERT INTO trades (requester_id, recipient_id, status) VALUES (%s, %s, 'PENDING')",
                 (requester_id, recipient_id),
@@ -219,27 +245,39 @@ def list_trades():
         cur.execute(
             """
             SELECT t.*, ru.username AS requester, pu.username AS recipient,
-                   COUNT(ti.trade_item_id) AS item_lines
+                   COALESCE(ti.item_lines, 0) AS item_lines
             FROM trades t
             JOIN users ru ON ru.user_id=t.requester_id
             JOIN users pu ON pu.user_id=t.recipient_id
-            LEFT JOIN trade_item ti ON ti.trade_id=t.trade_id
-            GROUP BY t.trade_id
+            LEFT JOIN (SELECT trade_id, COUNT(*) AS item_lines FROM trade_item GROUP BY trade_id) ti
+              ON ti.trade_id=t.trade_id
             ORDER BY t.created_at DESC
             """
         )
         return cur.fetchall()
 
 
-def set_trade_status(trade_id, status):
-    allowed = {"PENDING", "ACCEPTED", "REJECTED", "CANCELLED"}
-    if status not in allowed:
-        raise ValueError("Invalid trade status")
-    with mysql_cursor() as (_, cur):
-        cur.execute("UPDATE trades SET status=%s WHERE trade_id=%s", (status, trade_id))
+def set_trade_status(trade_id, status, actor_id):
+    trade_id = integer(trade_id, "Trade")
+    conn = mysql_connection(autocommit=False)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM trades WHERE trade_id=%s FOR UPDATE", (trade_id,))
+            trade = cur.fetchone()
+            if not trade:
+                raise ValueError("Trade not found.")
+            transition(trade, status, actor_id)
+            cur.execute("UPDATE trades SET status=%s WHERE trade_id=%s", (status, trade_id))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
-def complete_trade(trade_id):
+def complete_trade(trade_id, actor_id):
+    trade_id = integer(trade_id, "Trade")
     conn = mysql_connection(autocommit=False)
     try:
         with conn.cursor() as cur:
@@ -247,8 +285,7 @@ def complete_trade(trade_id):
             trade = cur.fetchone()
             if not trade:
                 raise ValueError("Trade not found")
-            if trade["status"] not in {"PENDING", "ACCEPTED"}:
-                raise ValueError(f"Trade cannot complete from status {trade['status']}")
+            transition(trade, "COMPLETED", actor_id)
 
             cur.execute("SELECT * FROM trade_item WHERE trade_id=%s ORDER BY trade_item_id FOR UPDATE", (trade_id,))
             items = cur.fetchall()
@@ -256,6 +293,25 @@ def complete_trade(trade_id):
                 raise ValueError("Trade contains no items")
 
             participants = {trade["requester_id"], trade["recipient_id"]}
+            if {item["owner_id"] for item in items} != participants:
+                raise ValueError("Both participants must offer cards.")
+            # Lock every existing source/destination in stable order before any writes.
+            # Missing destination rows are protected by InnoDB insert/unique locks;
+            # deadlocks are rolled back and may be retried by the user.
+            locked = {}
+            for user, card in sorted({(u, i["card_id"]) for u in participants for i in items}):
+                cur.execute("SELECT quantity, trade_quantity FROM collection_item WHERE user_id=%s AND card_id=%s FOR UPDATE", (user, card))
+                locked[user, card] = cur.fetchone()
+            seen = set()
+            for item in items:
+                key = (item["owner_id"], item["card_id"])
+                if key in seen or item["owner_id"] not in participants:
+                    raise ValueError("Invalid or duplicate trade item owner/card.")
+                seen.add(key)
+                qty = integer(item["quantity"], "Quantity")
+                source = locked[key]
+                if not source or min(source["quantity"], source["trade_quantity"]) < qty:
+                    raise ValueError("An offered card is no longer available. Update the collection or cancel this trade.")
             for item in items:
                 owner = item["owner_id"]
                 if owner not in participants:

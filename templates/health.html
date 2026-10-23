@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Database status</h2>
+<p>Live connectivity and imported catalogue counts. A reachable empty database still needs an import.</p>
+<table><thead><tr><th>Database</th><th>Connection</th><th>Cards</th></tr></thead>
+<tbody>{% for name, result in checks.items() %}<tr><td>{{ name }}</td><td>{{ 'Connected' if result.ok else 'Unavailable — check local service and .env' }}</td><td>{{ result.cards if result.ok else '—' }}</td></tr>{% endfor %}</tbody></table>
+<p>Run <code>python -m scripts.verify_setup</code> for the setup checks.</p>
+{% endblock %}

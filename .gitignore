@@ -9,3 +9,8 @@ __pycache__/
 data/*.csv
 data/*.zip
 !data/README.md
+
+.env.*
+!.env.example
+*.pem
+*.key

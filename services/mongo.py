@@ -66,8 +66,9 @@ def cards_with_attack_damage_at_least(min_damage=100, card_type=None, limit=50):
 
 def weakness_distribution(limit=20):
     pipeline = [
-        {"$unwind": "$weaknesses"},
-        {"$group": {"_id": "$weaknesses.type", "card_count": {"$sum": 1}}},
+        {"$project": {"weakness_types": {"$setUnion": [{"$ifNull": ["$weaknesses.type", []]}, []]}}},
+        {"$unwind": "$weakness_types"},
+        {"$group": {"_id": "$weakness_types", "card_count": {"$sum": 1}}},
         {"$sort": {"card_count": -1, "_id": 1}},
         {"$limit": int(limit)},
     ]

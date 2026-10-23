@@ -1,13 +1,28 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2>Trades</h2>
-<p class="hint">Item format: <code>base1-1:1,base1-2:2</code></p>
+<p class="hint">Local demonstration: users are selected explicitly; identities are not authenticated. Offers do not reserve cards. Completion rechecks availability and transfers both sides in one transaction.</p>
+<p>Enter unique <code>card_id:quantity</code> entries separated by commas. Both participants must offer cards.</p>
 <form method="post" class="grid-form">
+<input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
 <input type="hidden" name="action" value="create">
 <label>Requester<select name="requester_id">{% for u in all_users %}<option value="{{ u.user_id }}">{{ u.username }}</option>{% endfor %}</select></label>
 <label>Recipient<select name="recipient_id">{% for u in all_users %}<option value="{{ u.user_id }}">{{ u.username }}</option>{% endfor %}</select></label>
-<label>Requester gives<input name="requester_items" placeholder="base1-1:1"></label>
-<label>Recipient gives<input name="recipient_items" placeholder="base1-6:1"></label>
+<label>Requester gives<input name="requester_items" placeholder="base1-1:1" required maxlength="6000"></label>
+<label>Recipient gives<input name="recipient_items" placeholder="base1-6:1" required maxlength="6000"></label>
 <button>Create trade</button></form>
-<table><thead><tr><th>ID</th><th>Requester</th><th>Recipient</th><th>Status</th><th>Items</th><th>Actions</th></tr></thead><tbody>{% for t in rows %}<tr><td>{{ t.trade_id }}</td><td>{{ t.requester }}</td><td>{{ t.recipient }}</td><td>{{ t.status }}</td><td>{{ t.item_lines }}</td><td><form method="post" class="actions"><input type="hidden" name="trade_id" value="{{ t.trade_id }}"><button name="action" value="accept">Accept</button><button name="action" value="reject">Reject</button><button name="action" value="cancel">Cancel</button><button name="action" value="complete">Complete</button></form></td></tr>{% endfor %}</tbody></table>
+<table><thead><tr><th>ID</th><th>Requester</th><th>Recipient</th><th>Status</th><th>Items</th><th>Actions</th></tr></thead><tbody>
+{% for t in rows %}<tr><td>{{ t.trade_id }}</td><td>{{ t.requester }}</td><td>{{ t.recipient }}</td><td>{{ t.status }}</td><td>{{ t.item_lines }}</td><td>
+{% if t.status in ['PENDING', 'ACCEPTED'] %}
+<form method="post" class="actions">
+<input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+<input type="hidden" name="trade_id" value="{{ t.trade_id }}">
+<label>Acting as<select name="actor_id"><option value="{{ t.recipient_id }}">{{ t.recipient }}</option><option value="{{ t.requester_id }}">{{ t.requester }}</option></select></label>
+{% if t.status == 'PENDING' %}<button name="action" value="accept">Accept</button><button name="action" value="reject">Reject</button>{% endif %}
+<button name="action" value="cancel">Cancel</button>
+{% if t.status == 'ACCEPTED' %}<button name="action" value="complete">Complete</button>{% endif %}
+</form>{% else %}Finished{% endif %}</td></tr>
+{% else %}<tr><td colspan="6">No trades yet. Add tradeable cards to both collections, then create an offer.</td></tr>{% endfor %}
+</tbody></table>
+<p>Only the recipient accepts or rejects. Only the requester cancels. Either participant can complete an accepted trade.</p>
 {% endblock %}

@@ -5,6 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from db import mysql_connection
+from config import Config
 
 SCHEMA = ROOT / "schema" / "create_schema.sql"
 
@@ -20,6 +21,8 @@ def split_sql(script: str):
 
 
 def main():
+    if Config.MARIADB_DATABASE != "inf2003_pokemon":
+        raise ValueError("The schema targets inf2003_pokemon. Set MARIADB_DATABASE accordingly before initialising.")
     statements = split_sql(SCHEMA.read_text(encoding="utf-8"))
     conn = mysql_connection(with_database=False, autocommit=True)
     try:
