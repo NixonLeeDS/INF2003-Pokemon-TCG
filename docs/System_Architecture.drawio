@@ -1,0 +1,24 @@
+<mxfile host="app.diagrams.net" modified="2026-09-22T13:30:00.000Z" version="24.7.17" type="device">
+  <diagram id="86f8eaa299f2" name="Page-1">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="t" value="INF2003 Pokémon TCG System Architecture" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="160" y="20" width="520" height="40" as="geometry"/></mxCell>
+        <mxCell id="user" value="User" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;strokeWidth=2;" vertex="1" parent="1"><mxGeometry x="340" y="90" width="160" height="50" as="geometry"/></mxCell>
+        <mxCell id="ui" value="Flask Web UI" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;strokeWidth=2;" vertex="1" parent="1"><mxGeometry x="320" y="180" width="200" height="60" as="geometry"/></mxCell>
+        <mxCell id="app" value="Python Application Layer" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;strokeWidth=2;" vertex="1" parent="1"><mxGeometry x="285" y="290" width="270" height="70" as="geometry"/></mxCell>
+        <mxCell id="sql" value="MariaDB&#xa;Relational Database" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fontSize=14;fontStyle=1;strokeWidth=2;" vertex="1" parent="1"><mxGeometry x="105" y="460" width="230" height="100" as="geometry"/></mxCell>
+        <mxCell id="mongo" value="MongoDB&#xa;Document Database" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fontSize=14;fontStyle=1;strokeWidth=2;" vertex="1" parent="1"><mxGeometry x="505" y="460" width="230" height="100" as="geometry"/></mxCell>
+        <mxCell id="sqlnote" value="Structured data:&#xa;• Users&#xa;• Sets&#xa;• Cards&#xa;• Collection items&#xa;• Wishlist items&#xa;• Trades / Trade items" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fontSize=12;dashed=1;strokeWidth=1;" vertex="1" parent="1"><mxGeometry x="70" y="590" width="300" height="170" as="geometry"/></mxCell>
+        <mxCell id="mongonote" value="Flexible / nested card data:&#xa;• Abilities&#xa;• Attacks&#xa;• Weaknesses&#xa;• Resistances&#xa;• Legalities&#xa;• Rules / optional attributes" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fontSize=12;dashed=1;strokeWidth=1;" vertex="1" parent="1"><mxGeometry x="470" y="590" width="300" height="170" as="geometry"/></mxCell>
+        <mxCell id="e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;strokeWidth=2;" edge="1" parent="1" source="user" target="ui"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;strokeWidth=2;" edge="1" parent="1" source="ui" target="app"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" value="SQL / ORM" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;strokeWidth=2;" edge="1" parent="1" source="app" target="sql"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" value="PyMongo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;strokeWidth=2;" edge="1" parent="1" source="app" target="mongo"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;dashed=1;" edge="1" parent="1" source="sql" target="sqlnote"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;dashed=1;" edge="1" parent="1" source="mongo" target="mongonote"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
