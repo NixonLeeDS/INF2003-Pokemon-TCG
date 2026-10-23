@@ -6,7 +6,8 @@ Do not treat mock-based test success as a live integration or performance result
 ## Reproduce
 
 - [ ] Set `.env`, start MariaDB and MongoDB, import the documented dataset.
-- [ ] Run `python -m scripts.verify_setup`; record server versions and card counts.
+- [ ] Run `python -m scripts.verify_setup --expected-cards 17172`; require exit code 0
+      and retain its card-ID agreement/invariant results. Record server versions.
 - [ ] Run `python -m scripts.seed_demo_data` on a disposable demo instance. Record
       the printed user IDs and offered card pair. Reseeding overwrites demo quantities.
 - [ ] Run `python -m unittest discover -s tests -v` and retain output.

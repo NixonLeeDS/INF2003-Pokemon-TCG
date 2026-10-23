@@ -213,7 +213,7 @@ The bootstrap process:
 ## Verify the setup
 
 ```bash
-python -m scripts.verify_setup
+python -m scripts.verify_setup --expected-cards 17172
 ```
 
 Expected headline counts:
@@ -321,3 +321,27 @@ user; they do not prove the caller's identity. Keep it bound to localhost.
 Set a random `FLASK_SECRET_KEY` in `.env`; debug mode defaults to off. POST forms
 use session CSRF tokens. Environment variants, private keys, logs and raw datasets
 are ignored; `.env.example` is the tracked configuration template.
+
+## Import reliability
+
+Bootstrap parses and validates the CSV before recreating the relational schema.
+Missing columns, empty catalogues, duplicate card IDs, invalid identities and
+malformed nested field shapes stop the operation before schema changes. The
+standalone import performs the same validation. Card numbers are read as text so
+leading zeros survive. Nested values accept JSON and Python-literal CSV encodings.
+
+Re-import is an upsert: cards omitted from the file are retained in both stores.
+For included cards, relational type memberships are replaced inside the catalogue
+transaction so removed types do not linger. Do not import while demonstrating
+trades. MongoDB bulk writes and MariaDB commits are separate; a MongoDB failure can
+leave an incomplete cross-store import. Correct the issue, rerun the same import,
+then run verification. Importing a different dataset over an existing catalogue
+requires a deliberate reset if omitted cards should be removed.
+
+`python -m scripts.verify_setup` compares complete card-ID sets across stores and
+checks collection quantities, wishlist priorities and trade participant/item
+invariants. It exits with code 1 on failure, checks both services independently,
+and does not print connection secrets. Equal counts alone do not pass if IDs differ.
+Use `--expected-cards 17172` for the documented dataset; omit that option for small
+test fixtures. Verification detects identity disagreement and selected invariants,
+not every nested value or cross-store field difference.

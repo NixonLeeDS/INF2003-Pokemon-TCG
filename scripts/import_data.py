@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import json
 from pathlib import Path
 from typing import Any
 import sys
@@ -17,7 +18,9 @@ DEFAULT_CSV = ROOT / "data" / "pokemon-tcg-data-master 1999-2023.csv"
 
 
 def missing(value: Any) -> bool:
-    return value is None or (isinstance(value, float) and pd.isna(value)) or pd.isna(value)
+    if isinstance(value, (list, dict, tuple)):
+        return False
+    return value is None or bool(pd.isna(value))
 
 
 def scalar(value: Any, default=None):
@@ -52,9 +55,63 @@ def parse_nested(value: Any, default=None):
     if not text:
         return default
     try:
-        return ast.literal_eval(text)
-    except (ValueError, SyntaxError):
-        return text
+        parsed = json.loads(text)
+    except (ValueError, TypeError):
+        try:
+            parsed = ast.literal_eval(text)
+        except (ValueError, SyntaxError):
+            raise ValueError("Malformed nested JSON/Python literal") from None
+    return default if parsed is None else parsed
+
+
+ARRAY_FIELDS = {
+    "types": str, "subtypes": str, "abilities": dict, "attacks": dict,
+    "weaknesses": dict, "resistances": dict, "retreatCost": str,
+    "rules": str, "evolvesTo": str, "nationalPokedexNumbers": int,
+}
+
+
+def validate_dataset(df: pd.DataFrame):
+    """Reject invalid catalogue identities/shapes before changing either store."""
+    from services.validation import card_identifier
+    required = {"id", "name", "set"}
+    absent = required - set(df.columns)
+    if absent:
+        raise ValueError(f"Missing CSV columns: {', '.join(sorted(absent))}")
+    if df.empty:
+        raise ValueError("The CSV contains no cards.")
+    seen = set()
+    for line, row in enumerate(df.to_dict(orient="records"), start=2):
+        try:
+            raw_id = row["id"]
+            if not isinstance(raw_id, str) or raw_id != raw_id.strip():
+                raise ValueError("Card ID must be nonblank text without surrounding spaces")
+            card_id = card_identifier(raw_id)
+            if "-" not in card_id or not all(card_id.rsplit("-", 1)) or len(set_id_from_card_id(card_id)) > 32:
+                raise ValueError("Card ID must contain a set prefix and fit the schema")
+            if card_id.casefold() in seen:
+                raise ValueError(f"Duplicate card ID: {card_id}")
+            seen.add(card_id.casefold())
+            for field, max_length in (("name", 160), ("set", 120)):
+                value = row[field]
+                if not isinstance(value, str) or not value.strip() or len(value) > max_length:
+                    raise ValueError(f"{field} must be nonblank text up to {max_length} characters")
+            for field, item_type in ARRAY_FIELDS.items():
+                values = parse_nested(row.get(field), [])
+                if not isinstance(values, list) or any(not isinstance(v, item_type) or isinstance(v, bool) for v in values):
+                    raise ValueError(f"{field} must be an array of {item_type.__name__} values")
+            for field in ("legalities", "ancientTrait"):
+                if not isinstance(parse_nested(row.get(field), {}), dict):
+                    raise ValueError(f"{field} must be an object")
+        except (ValueError, TypeError) as exc:
+            raise ValueError(f"CSV row {line}: {exc}") from exc
+
+
+def load_dataset(csv_path: Path):
+    # Preserve catalogue identifiers such as leading-zero card numbers.
+    df = pd.read_csv(csv_path, dtype=str)
+    validate_dataset(df)
+    return df
 
 
 def set_id_from_card_id(card_id: str) -> str:
@@ -141,10 +198,17 @@ def import_mariadb(df: pd.DataFrame):
             for start in range(0, len(card_rows), 1000):
                 cur.executemany(card_sql, card_rows[start:start + 1000])
 
-            cur.executemany(
-                "INSERT IGNORE INTO card_type (card_id, type) VALUES (%s, %s)",
-                type_rows,
-            )
+            # Replace type memberships for imported cards, including cards that
+            # now have no types. Keep cards omitted from this upsert untouched.
+            for start in range(0, len(card_rows), 1000):
+                ids = [row[0] for row in card_rows[start:start + 1000]]
+                placeholders = ",".join(["%s"] * len(ids))
+                cur.execute(f"DELETE FROM card_type WHERE card_id IN ({placeholders})", ids)
+            if type_rows:
+                cur.executemany(
+                    "INSERT INTO card_type (card_id, type) VALUES (%s, %s)",
+                    sorted(set(type_rows)),
+                )
         conn.commit()
         print(f"MariaDB import complete: {len(set_rows)} sets, {len(card_rows)} cards, {len(type_rows)} card-type rows.")
     except Exception:
@@ -203,7 +267,11 @@ def import_mongodb(df: pd.DataFrame):
 
 def main(csv_path: Path = DEFAULT_CSV):
     print(f"Reading {csv_path}")
-    df = pd.read_csv(csv_path)
+    df = load_dataset(csv_path)
+    import_dataset(df)
+
+
+def import_dataset(df: pd.DataFrame):
     print(f"Loaded {len(df):,} rows x {len(df.columns)} columns.")
     import_mariadb(df)
     import_mongodb(df)
