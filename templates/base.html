@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}INF2003 Pokémon TCG{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <h1>Pokémon TCG Collection & Trading</h1>
+  <nav>
+    <a href="{{ url_for('index') }}">Cards</a>
+    <a href="{{ url_for('collection') }}">Collection</a>
+    <a href="{{ url_for('wishlist') }}">Wishlist</a>
+    <a href="{{ url_for('trade_matches') }}">Trade Matches</a>
+    <a href="{{ url_for('trades') }}">Trades</a>
+    <a href="{{ url_for('analytics') }}">Analytics</a>
+  </nav>
+</header>
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>
