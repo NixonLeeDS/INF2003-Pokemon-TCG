@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="940" viewBox="0 0 1500 940">
+<style>
+text{font-family:Arial,Helvetica,sans-serif;fill:#1f2937}.title{font-size:25px;font-weight:700}.sub{font-size:13px;fill:#6b7280}.entity{font-size:15px;font-weight:700;fill:#fff}.attr{font-size:12px}.pk{font-weight:700}.rel{font-size:11px;font-weight:700;fill:#475569}.note{font-size:11px;fill:#64748b}
+</style>
+<defs>
+<marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#64748b"/></marker>
+</defs>
+<rect width="1500" height="940" fill="#fff"/>
+<text x="750" y="40" text-anchor="middle" class="title">Pokémon TCG Relational ER Model</text>
+<text x="750" y="65" text-anchor="middle" class="sub">Primary keys, foreign keys and core cardinalities</text>
+
+<!-- SETS -->
+<g transform="translate(55 110)">
+<rect width="260" height="230" rx="10" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+<rect width="260" height="38" rx="10" fill="#2563eb"/><rect y="28" width="260" height="10" fill="#2563eb"/>
+<text x="130" y="25" text-anchor="middle" class="entity">SETS</text>
+<text x="14" y="62" class="attr pk">PK  set_id : VARCHAR</text><text x="14" y="86" class="attr">set_name : VARCHAR</text><text x="14" y="110" class="attr">series : VARCHAR</text><text x="14" y="134" class="attr">publisher : VARCHAR</text><text x="14" y="158" class="attr">generation : VARCHAR</text><text x="14" y="182" class="attr">release_date : DATE</text>
+</g>
+
+<!-- CARDS -->
+<g transform="translate(370 90)">
+<rect width="310" height="300" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+<rect width="310" height="38" rx="10" fill="#7c3aed"/><rect y="28" width="310" height="10" fill="#7c3aed"/>
+<text x="155" y="25" text-anchor="middle" class="entity">CARDS</text>
+<text x="14" y="62" class="attr pk">PK  card_id : VARCHAR</text><text x="14" y="86" class="attr pk">FK  set_id : VARCHAR</text><text x="14" y="110" class="attr">card_name : VARCHAR</text><text x="14" y="134" class="attr">card_number : VARCHAR</text><text x="14" y="158" class="attr">supertype : VARCHAR</text><text x="14" y="182" class="attr">hp : INT</text><text x="14" y="206" class="attr">rarity : VARCHAR</text><text x="14" y="230" class="attr">artist : VARCHAR</text><text x="14" y="254" class="attr">evolves_from : VARCHAR</text><text x="14" y="278" class="attr">regulation_mark : VARCHAR</text>
+</g>
+
+<!-- CARD TYPE -->
+<g transform="translate(735 120)">
+<rect width="250" height="130" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+<rect width="250" height="38" rx="10" fill="#7c3aed"/><rect y="28" width="250" height="10" fill="#7c3aed"/>
+<text x="125" y="25" text-anchor="middle" class="entity">CARD_TYPE</text>
+<text x="14" y="65" class="attr pk">PK/FK  card_id : VARCHAR</text><text x="14" y="91" class="attr pk">PK  type : VARCHAR</text>
+</g>
+
+<!-- USERS -->
+<g transform="translate(1155 110)">
+<rect width="285" height="180" rx="10" fill="#fff" stroke="#0f766e" stroke-width="2"/>
+<rect width="285" height="38" rx="10" fill="#0f766e"/><rect y="28" width="285" height="10" fill="#0f766e"/>
+<text x="142" y="25" text-anchor="middle" class="entity">USERS</text>
+<text x="14" y="65" class="attr pk">PK  user_id : INT</text><text x="14" y="91" class="attr">username : VARCHAR</text><text x="14" y="117" class="attr">email : VARCHAR</text><text x="14" y="143" class="attr">created_at : DATETIME</text>
+</g>
+
+<!-- COLLECTION -->
+<g transform="translate(155 560)">
+<rect width="305" height="210" rx="10" fill="#fff" stroke="#ea580c" stroke-width="2"/>
+<rect width="305" height="38" rx="10" fill="#ea580c"/><rect y="28" width="305" height="10" fill="#ea580c"/>
+<text x="152" y="25" text-anchor="middle" class="entity">COLLECTION_ITEM</text>
+<text x="14" y="65" class="attr pk">PK/FK  user_id : INT</text><text x="14" y="91" class="attr pk">PK/FK  card_id : VARCHAR</text><text x="14" y="117" class="attr">quantity : INT</text><text x="14" y="143" class="attr">trade_quantity : INT</text><text x="14" y="169" class="attr">added_at : DATETIME</text>
+</g>
+
+<!-- WISHLIST -->
+<g transform="translate(525 560)">
+<rect width="305" height="185" rx="10" fill="#fff" stroke="#ea580c" stroke-width="2"/>
+<rect width="305" height="38" rx="10" fill="#ea580c"/><rect y="28" width="305" height="10" fill="#ea580c"/>
+<text x="152" y="25" text-anchor="middle" class="entity">WISHLIST_ITEM</text>
+<text x="14" y="65" class="attr pk">PK/FK  user_id : INT</text><text x="14" y="91" class="attr pk">PK/FK  card_id : VARCHAR</text><text x="14" y="117" class="attr">priority : INT</text><text x="14" y="143" class="attr">created_at : DATETIME</text>
+</g>
+
+<!-- TRADES -->
+<g transform="translate(900 545)">
+<rect width="300" height="235" rx="10" fill="#fff" stroke="#db2777" stroke-width="2"/>
+<rect width="300" height="38" rx="10" fill="#db2777"/><rect y="28" width="300" height="10" fill="#db2777"/>
+<text x="150" y="25" text-anchor="middle" class="entity">TRADES</text>
+<text x="14" y="65" class="attr pk">PK  trade_id : INT</text><text x="14" y="91" class="attr pk">FK  requester_id : INT</text><text x="14" y="117" class="attr pk">FK  recipient_id : INT</text><text x="14" y="143" class="attr">status : VARCHAR</text><text x="14" y="169" class="attr">created_at : DATETIME</text><text x="14" y="195" class="attr">updated_at : DATETIME</text>
+</g>
+
+<!-- TRADE ITEM -->
+<g transform="translate(1235 560)">
+<rect width="250" height="210" rx="10" fill="#fff" stroke="#db2777" stroke-width="2"/>
+<rect width="250" height="38" rx="10" fill="#db2777"/><rect y="28" width="250" height="10" fill="#db2777"/>
+<text x="125" y="25" text-anchor="middle" class="entity">TRADE_ITEM</text>
+<text x="14" y="65" class="attr pk">PK  trade_item_id : INT</text><text x="14" y="91" class="attr pk">FK  trade_id : INT</text><text x="14" y="117" class="attr pk">FK  card_id : VARCHAR</text><text x="14" y="143" class="attr pk">FK  owner_id : INT</text><text x="14" y="169" class="attr">quantity : INT</text>
+</g>
+
+<!-- relationships -->
+<path d="M315 210 H370" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="342" y="198" text-anchor="middle" class="rel">1 : M</text>
+<path d="M680 185 H735" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="707" y="173" text-anchor="middle" class="rel">1 : M</text>
+
+<path d="M525 390 V465 H307 V560" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="397" y="454" class="rel">1 : M</text>
+<path d="M575 390 V500 H677 V560" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="607" y="489" class="rel">1 : M</text>
+
+<path d="M1297 290 V430 H307 V560" stroke="#0f766e" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="1020" y="419" class="rel">1 : M owns</text>
+<path d="M1325 290 V465 H677 V560" stroke="#0f766e" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="1040" y="454" class="rel">1 : M wants</text>
+<path d="M1350 290 V500 H1050 V545" stroke="#db2777" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="1180" y="489" class="rel">1 : M requester / recipient</text>
+
+<path d="M1200 660 H1235" stroke="#db2777" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="1218" y="648" text-anchor="middle" class="rel">1 : M</text>
+<path d="M650 390 V520 H1360 V560" stroke="#7c3aed" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="1010" y="509" class="rel">1 : M card</text>
+<path d="M1400 290 V400 H1430 V560" stroke="#0f766e" stroke-width="2" fill="none" marker-end="url(#arrow)"/><text x="1410" y="389" class="rel">1 : M owner</text>
+
+<rect x="310" y="825" width="880" height="58" rx="9" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="750" y="850" text-anchor="middle" class="note">COLLECTION_ITEM and WISHLIST_ITEM resolve the many-to-many relationships between USERS and CARDS.</text>
+<text x="750" y="869" text-anchor="middle" class="note">TRADE_ITEM records the cards and quantities contributed by each participant to a trade.</text>
+<text x="750" y="915" text-anchor="middle" class="sub">Blue/Purple = catalogue • Teal = users • Orange = collection/wishlist • Pink = trading</text>
+</svg>
