@@ -1,22 +1,143 @@
 # INF2003 Pokémon TCG Collection and Trading Management System
 
-Team 40 starter implementation for INF2003 Database Systems.
+Team 40 project for **INF2003 Database Systems**.
 
-## What is already scaffolded
+The application combines a relational database and a document database to support Pokémon TCG card discovery, personal collection management, wishlists, trading workflows, and analytics.
 
-- **MariaDB relational model:** `users`, `sets`, `cards`, `card_type`, `collection_item`, `wishlist_item`, `trades`, `trade_item`
-- PK/FK, UNIQUE and CHECK constraints
-- `user_collection_summary` SQL view and useful indexes
-- Full importer for the supplied **17,172-row / 29-column** Pokémon TCG CSV
-- MongoDB `card_details` documents containing nested attacks, abilities, weaknesses, resistances, legality and rules
-- Deterministic synthetic demo users/collections/wishlists so trade matching returns results
-- 5-table wishlist-to-trade matching query
-- Reciprocal trade matching query
-- Atomic trade completion using SQL transactions, row locking, validation and rollback
-- Flask demo UI for cards, collections, wishlists, trade matches, trades and analytics
-- MongoDB nested keyword query, high-damage attack query, weakness aggregation, legality aggregation and average-attack-count aggregation
+## System architecture
 
-## 1. Prerequisites
+![System Architecture](docs/System_Architecture.svg)
+
+The application is organised into four layers:
+
+- **Presentation layer:** Flask routes and templates for card search, collection, wishlist, trades, trade matching, and analytics.
+- **Application layer:** catalogue, collection/wishlist, trading, and analytics services.
+- **Database access layer:** PyMySQL for MariaDB and PyMongo for MongoDB.
+- **Data storage layer:** MariaDB for structured transactional data and MongoDB for flexible nested card attributes and aggregation workloads.
+
+The import pipeline transforms the source CSV into both database models. Structured catalogue fields are normalised into MariaDB, while variable nested fields such as attacks, abilities, weaknesses, resistances, legalities, and rules are stored as MongoDB documents.
+
+Editable diagrams are available in `docs/`.
+
+## Database design
+
+### MariaDB
+
+The relational model contains eight main entities:
+
+```text
+USERS
+SETS
+CARDS
+CARD_TYPE
+COLLECTION_ITEM
+WISHLIST_ITEM
+TRADES
+TRADE_ITEM
+```
+
+The schema includes:
+
+- primary and foreign keys
+- composite keys for junction tables
+- UNIQUE constraints
+- CHECK constraints
+- indexes on frequently queried attributes
+- the `user_collection_summary` view
+- transactional trade completion with validation and rollback
+
+### MongoDB
+
+MongoDB stores one `card_details` document per card with nested and optional attributes such as:
+
+```text
+abilities[]
+attacks[]
+weaknesses[]
+resistances[]
+retreat_cost[]
+legalities{}
+rules[]
+ancient_trait
+evolves_to[]
+national_pokedex_numbers[]
+```
+
+MongoDB is used for both nested-field queries and aggregation pipelines, including attack/ability keyword search, high-damage attack search, weakness distribution, legality analysis, and average attack count by Pokémon type.
+
+## Core functionality
+
+### Card catalogue
+
+- search by card name
+- filter by set, type, rarity, and minimum HP
+- combine MariaDB catalogue fields with MongoDB nested card details
+
+### Collection and wishlist
+
+- add, update, and remove cards
+- track owned quantity
+- track tradeable quantity
+- assign wishlist priority
+
+### Trading
+
+- create trades between two users
+- record cards offered by each participant
+- find wishlist cards currently available from other users
+- find reciprocal matches where both users own cards wanted by the other
+- complete trades atomically using a database transaction
+
+### Analytics
+
+- user collection summaries
+- set-completion percentage
+- weakness distribution
+- legality distribution
+- average number of attacks by type
+- nested attack/ability keyword search
+- attack-damage threshold search
+
+## Advanced relational queries
+
+The project includes several multi-table queries. The main trade-matching query joins:
+
+```text
+WISHLIST_ITEM
+CARDS
+SETS
+COLLECTION_ITEM
+USERS
+```
+
+A reciprocal matching query compares both users' wishlists and tradeable collections. Set-completion analysis uses joins, aggregation, `COUNT(DISTINCT ...)`, `GROUP BY`, and a subquery.
+
+Example queries are available in:
+
+```text
+schema/demo_queries.sql
+```
+
+## Dataset
+
+The project uses **Pokemon TCG All Cards 1999-2023**.
+
+The source CSV used for development contains:
+
+```text
+17,172 card records
+29 source attributes
+```
+
+Place the CSV at:
+
+```text
+data/pokemon-tcg-data-master 1999-2023.csv
+```
+
+The raw dataset is not versioned in this repository. The import pipeline reconstructs the project databases from the source file.
+
+## Prerequisites
 
 Install:
 
@@ -24,100 +145,98 @@ Install:
 - MariaDB Server
 - MongoDB Community Server
 
-The course uses MariaDB for SQL work, so this repo stays with MariaDB rather than introducing another relational DBMS.
-
-## 2. Dataset
-
-Download **Pokemon TCG All Cards 1999-2023** from Kaggle and place the CSV at:
-
-```text
-data/pokemon-tcg-data-master 1999-2023.csv
-```
-
-The CSV is intentionally not versioned in this repository. The importer expects the 17,172-row, 29-column dataset used for this project.
-
-## 3. Create Python environment
+## Environment setup
 
 ### Windows PowerShell
 
 ```powershell
+git clone https://github.com/NixonLeeDS/INF2003-Pokemon-TCG.git
+cd INF2003-Pokemon-TCG
+
 py -m venv .venv
 .venv\Scripts\Activate.ps1
+
 pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-### macOS/Linux
+### macOS / Linux
 
 ```bash
+git clone https://github.com/NixonLeeDS/INF2003-Pokemon-TCG.git
+cd INF2003-Pokemon-TCG
+
 python3 -m venv .venv
 source .venv/bin/activate
+
 pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Edit `.env` and set your MariaDB password.
+Edit `.env` and set the local MariaDB connection details.
 
-Recommended default database names:
+Default database names:
 
-- MariaDB: `inf2003_pokemon`
-- MongoDB: `inf2003_pokemon`
+```text
+MariaDB: inf2003_pokemon
+MongoDB: inf2003_pokemon
+```
 
-## 4. Bootstrap everything
+## Initialise the databases
 
-Make sure MariaDB and MongoDB are running, then from the repository root:
+Make sure MariaDB and MongoDB are running.
+
+Then run:
 
 ```bash
 python -m scripts.bootstrap
 ```
 
-This recreates the MariaDB schema, imports the Pokémon catalogue into both databases, creates indexes, creates demo users, and seeds collection/wishlist overlap for trade-matching demonstrations.
+The bootstrap process:
 
-> `bootstrap` recreates the project tables. Do not use it after you start keeping important manually-entered demo data unless you intend to reset the database.
+1. recreates the MariaDB project schema
+2. loads the relational card catalogue
+3. loads nested card documents into MongoDB
+4. creates MongoDB indexes
+5. creates demonstration users
+6. seeds collection and wishlist overlap for trade-matching tests
 
-## 5. Verify row counts
+## Verify the setup
 
 ```bash
 python -m scripts.verify_setup
 ```
 
-Expected headline result:
+Expected headline counts:
 
 ```text
-MariaDB cards             : 17172
-MongoDB card_details      : 17172
+MariaDB cards        : 17172
+MongoDB card_details : 17172
 ```
 
-## 6. Run the Flask app
+## Run the application
 
 ```bash
 python app.py
 ```
 
-Open `http://127.0.0.1:5000`.
+Open:
 
-## Important demo workflows
+```text
+http://127.0.0.1:5000
+```
 
-### Relational workflow
+## Recommended demonstration flow
 
-1. Open **Collection** and choose a user.
-2. Add/update cards and mark some copies as tradeable.
-3. Open **Wishlist** and add wanted cards.
-4. Open **Trade Matches** to demonstrate the 5-table JOIN.
-5. Open **Trades**, create a trade and complete it.
-6. Completion validates ownership/tradeable quantities and updates both users inside one transaction.
-
-### MongoDB workflow
-
-Open **Analytics** to demonstrate that MongoDB is not just secondary card-detail storage:
-
-- nested attack/ability keyword search
-- attacks with numeric damage above a threshold
-- weakness distribution using `$unwind` + `$group`
-- legality aggregation
-- average number of attacks by Pokémon type
-
-This directly addresses Prof Lam's feedback that the nested structure should lead to useful MongoDB queries/aggregations.
+1. Search the card catalogue and open a card detail page.
+2. Select a user and update the user's collection.
+3. Mark selected copies as tradeable.
+4. Add cards to another user's wishlist.
+5. Open **Trade Matches** to demonstrate the five-table join.
+6. Demonstrate reciprocal trade matching.
+7. Create a trade and complete it.
+8. Verify that both collections update atomically.
+9. Open **Analytics** to demonstrate the MongoDB aggregation queries.
 
 ## Repository structure
 
@@ -128,22 +247,36 @@ INF2003-Pokemon-TCG/
 ├── db.py
 ├── requirements.txt
 ├── .env.example
-├── schema/
-├── scripts/
-├── services/
-├── templates/
-├── static/
 ├── data/
-└── docs/
+│   └── README.md
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── DESIGN_NOTES.md
+│   ├── ERD.drawio
+│   ├── QUERY_CATALOG.md
+│   ├── System_Architecture.drawio
+│   └── System_Architecture.svg
+├── schema/
+│   ├── create_schema.sql
+│   └── demo_queries.sql
+├── scripts/
+│   ├── bootstrap.py
+│   ├── import_data.py
+│   ├── init_db.py
+│   ├── seed_demo_data.py
+│   └── verify_setup.py
+├── services/
+│   ├── relational.py
+│   └── mongo.py
+├── static/
+│   └── style.css
+└── templates/
 ```
 
-## Next implementation targets
+## Technical documentation
 
-1. Run the bootstrap locally and fix any environment-specific connection issues.
-2. Test the collection/wishlist workflow manually.
-3. Demonstrate the 5-table trade match.
-4. Test one successful and one failed/rolled-back trade completion.
-5. Capture SQL query + output screenshots for the final report.
-6. Capture Mongo aggregation + output screenshots.
-7. Add `EXPLAIN` before/after an index for one performance comparison.
-8. Improve UI only after the database workflows are stable.
+- [Architecture](docs/ARCHITECTURE.md)
+- [Database design notes](docs/DESIGN_NOTES.md)
+- [Query catalog](docs/QUERY_CATALOG.md)
+- [Editable ER diagram](docs/ERD.drawio)
+- [Editable system architecture diagram](docs/System_Architecture.drawio)
