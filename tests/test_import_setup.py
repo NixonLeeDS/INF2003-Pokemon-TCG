@@ -14,6 +14,10 @@ def dataset(**updates):
 
 
 class ImportValidationTests(unittest.TestCase):
+    def test_unown_punctuation_card_ids_are_valid(self):
+        for card_id in ('ex10-!', 'ex10-?'):
+            importer.validate_dataset(dataset(id=card_id))
+
     def test_nested_arrays_and_dicts_do_not_use_array_truth_values(self):
         self.assertFalse(importer.missing(['Fire', 'Water']))
         self.assertEqual(importer.parse_nested(['Fire'], []), ['Fire'])

@@ -13,8 +13,8 @@ def integer(value, label, minimum=1, maximum=2147483647):
 
 def card_identifier(value):
     value = (value or "").strip()
-    if not re.fullmatch(r"[A-Za-z0-9_-]{1,48}", value):
-        raise ValueError("Enter a valid card ID (up to 48 letters, numbers, hyphens or underscores).")
+    if not re.fullmatch(r"[A-Za-z0-9_!?-]{1,48}", value):
+        raise ValueError("Enter a valid card ID (up to 48 letters, numbers, hyphens, underscores, ! or ?).")
     return value
 
 
