@@ -102,6 +102,11 @@ MongoDB is used for both nested-field queries and aggregation pipelines, includi
 
 ## Advanced relational queries
 
+Open **SQL Demo** to show a four-table/three-JOIN collection query, a CTE with
+`DENSE_RANK`, and a correlated `NOT EXISTS` query alongside live results and SQL.
+The Trade Matches page already demonstrates five tables and four JOINs.
+
+
 The project includes several multi-table queries. The main trade-matching query joins:
 
 ```text
@@ -297,7 +302,9 @@ python -m scripts.explain_queries --user-id 1
 
 The tests use mocked database connections and check input rules, all trade-state/
 actor combinations, rollback paths, CSRF protection, and template compilation.
-They do not establish live database concurrency correctness.
+Query-result tests also execute the advanced SQL against a small in-memory SQLite
+fixture to check grouping, rank ties and anti-query semantics. They do not establish
+MariaDB execution plans or live database concurrency correctness.
 
 Open **Status** (`/health`) to check each store independently; outages return HTTP
 503. The deterministic seed prints the actual participant IDs and a valid trade

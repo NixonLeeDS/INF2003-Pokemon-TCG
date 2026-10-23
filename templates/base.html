@@ -24,6 +24,7 @@
       <a class="{{ 'active' if request.endpoint == 'trade_matches' else '' }}" href="{{ url_for('trade_matches') }}">Trade Matches</a>
       <a class="{{ 'active' if request.endpoint == 'trades' else '' }}" href="{{ url_for('trades') }}">Trades</a>
       <a class="{{ 'active' if request.endpoint == 'analytics' else '' }}" href="{{ url_for('analytics') }}">Analytics</a>
+      <a class="{{ 'active' if request.endpoint == 'query_demo' else '' }}" href="{{ url_for('query_demo') }}">SQL Demo</a>
       <a href="{{ url_for('health') }}">Status</a>
     </nav>
   </div>

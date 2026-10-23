@@ -2,6 +2,7 @@
 import argparse
 import json
 from db import mysql_cursor
+from services.query_demo import QUERIES
 
 
 def main():
@@ -24,6 +25,7 @@ def main():
                 DENSE_RANK() OVER (ORDER BY total_cards DESC) AS collection_rank
                 FROM user_collection_summary ORDER BY collection_rank, username""", ()),
         }
+        queries.update({key: (demo["sql"], (args.user_id,)) for key, demo in QUERIES.items()})
         for label, (query, params) in queries.items():
             cur.execute('EXPLAIN FORMAT=JSON ' + query, params)
             print('\n' + label)

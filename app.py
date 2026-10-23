@@ -145,6 +145,16 @@ def trades():
     return render_template("trades.html", rows=sql_service.list_trades())
 
 
+@app.route("/query-demo")
+def query_demo():
+    from services.query_demo import QUERIES, run_query
+    user_id = selected_user_id()
+    selected = request.args.get("query", "collection_sets")
+    rows = run_query(selected, user_id)
+    return render_template("query_demo.html", queries=QUERIES, query=QUERIES[selected],
+                           selected=selected, user_id=user_id, rows=rows)
+
+
 @app.route("/analytics")
 def analytics():
     user_id = selected_user_id()

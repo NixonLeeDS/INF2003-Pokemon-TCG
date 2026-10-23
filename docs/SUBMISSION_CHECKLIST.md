@@ -57,6 +57,7 @@ image links. Keep credentials and local environment values out of screenshots.
 | 06-validation.png | Friendly rejected input or stale offer |
 | 07-analytics.png | SQL summary and nested Mongo aggregations |
 | 08-query-plans.png | Actual SQL/Mongo plan evidence |
+| 09-sql-demo.png | Three JOINs, CTE/window ranking and NOT EXISTS results |
 
 - [ ] Check architecture and ERD still describe Flask + MariaDB + MongoDB and eight entities.
 - [ ] Review README setup on a fresh environment; bootstrap is destructive.
