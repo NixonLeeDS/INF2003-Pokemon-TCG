@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Card Search{% endblock %}
+{% block content %}
+<h2>Card Search</h2>
+<form method="get" class="grid-form">
+  <label>Name<input name="name" value="{{ filters.name }}"></label>
+  <label>Set<select name="set_id"><option value="">All</option>{% for s in sets %}<option value="{{ s.set_id }}" {% if filters.set_id==s.set_id %}selected{% endif %}>{{ s.set_name }}</option>{% endfor %}</select></label>
+  <label>Type<select name="card_type"><option value="">All</option>{% for t in types %}<option {% if filters.card_type==t %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
+  <label>Rarity<select name="rarity"><option value="">All</option>{% for r in rarities %}<option {% if filters.rarity==r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></label>
+  <label>Min HP<input name="min_hp" value="{{ filters.min_hp }}" type="number"></label>
+  <button>Search</button>
+</form>
+<table><thead><tr><th>Name</th><th>Set</th><th>Type</th><th>HP</th><th>Rarity</th></tr></thead><tbody>
+{% for c in cards %}<tr><td><a href="{{ url_for('card_detail', card_id=c.card_id) }}">{{ c.card_name }}</a></td><td>{{ c.set_name }}</td><td>{{ c.types or '-' }}</td><td>{{ c.hp or '-' }}</td><td>{{ c.rarity or '-' }}</td></tr>{% endfor %}
+</tbody></table>
+{% endblock %}
