@@ -32,7 +32,8 @@ Record MariaDB version, SQL mode, dataset size, chosen keys, access type, estima
 rows and actual returned rows. Compare prefix (`Pika%`) with contains (`%Pika%`)
 search; a leading wildcard generally prevents a B-tree range lookup. Do not claim
 an index speedup merely because an index exists. The matching plan demonstrates
-wishlist/collection keys; the window query ranks aggregate collection totals.
+wishlist/collection keys; reciprocal matching and set completion use the same
+SQL as the application.
 Small seeded tables may rationally use scans. Do not fabricate timings.
 
 Run `mongosh "mongodb://127.0.0.1:27017/inf2003_pokemon" --file scripts/mongo_evidence.js`.
@@ -57,7 +58,7 @@ image links. Keep credentials and local environment values out of screenshots.
 | 06-validation.png | Friendly rejected input or stale offer |
 | 07-analytics.png | SQL summary and nested Mongo aggregations |
 | 08-query-plans.png | Actual SQL/Mongo plan evidence |
-| 09-sql-demo.png | Three JOINs, CTE/window ranking and NOT EXISTS results |
+| 09-sql-demo.png | Actual matching, completion and unavailable-wishlist results |
 
 - [ ] Check architecture and ERD still describe Flask + MariaDB + MongoDB and eight entities.
 - [ ] Review README setup on a fresh environment; bootstrap is destructive.

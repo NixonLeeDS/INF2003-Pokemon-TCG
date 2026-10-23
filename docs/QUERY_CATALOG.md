@@ -75,29 +75,35 @@ Groups documents by nested `legalities.standard` and `legalities.expanded` value
 
 Uses `$size`, `$unwind`, `$group` and `$avg` to compare nested attack density between PokÃ©mon types.
 
-## R6–R8. Interactive advanced SQL demonstration
+## R6. Unavailable wishlist cards
 
-Open **SQL Demo** (`/query-demo`). SQL is stored in `services/query_demo.py`;
-the page and EXPLAIN script execute that same parameterised definition.
+**Question:** Which wanted cards have no supplier listing tradeable copies?
 
-| ID | Query key | Evidence | Result grain |
-| --- | --- | --- | --- |
-| R6 | collection_sets | Four tables, exactly three JOINs, GROUP BY and SUM | One user/set |
-| R7 | rank_sets | CTE, aggregation, DENSE_RANK window function | One collected set |
-| R8 | unavailable_wishes | Correlated NOT EXISTS anti-subquery | One unavailable wishlist card |
+A correlated NOT EXISTS checks other users' stock. This appears on Trade Matches
+so users can distinguish available cards from cards they cannot currently obtain.
+Own stock and non-tradeable copies do not qualify as suppliers.
 
-Three JOINs usually connect four table references; a three-table join usually
-uses two JOIN clauses. R1 exceeds both interpretations: five tables, four JOINs.
-R2 uses seven table references (including repeated collection, wishlist and card
-roles), rather than seven distinct entities. Describe both counts accurately.
+## Inspecting real application queries
 
-R6 counts collection rows, which are unique on (user_id, card_id), so COUNT(*) is
-the number of distinct owned cards within each set. Joining CARD_TYPE here would
-multiply multi-type cards and inflate SUM(quantity), so it is deliberately absent.
-R7 aggregates before ranking, ties share a rank, and the final set ID gives stable
-display order. R8 excludes the selected user's own stock from potential suppliers.
+Open **SQL Demo** (`/query-demo`) to inspect R1, R2, R3 and R6. Their SQL is defined
+once in `services/query_demo.py` and executed by both the application services and
+`python -m scripts.explain_queries --user-id <seed-user-id>`.
 
-Run `python -m scripts.explain_queries --user-id <seed-user-id>` to collect plans
-and sample results for these exact SQL definitions. MariaDB 10.2+ supports the CTE
-and window-function examples. Plans and result evidence must come from a running,
-populated instance; no timings or output are precomputed in this repository.
+| Query | User decision | Why the relationships matter |
+| --- | --- | --- |
+| Supplier matching | Who should I approach for a wanted card? | Wishlist selects demand, collection checks tradeable stock, users identifies the supplier, cards and sets identify the exact printing. |
+| Reciprocal matching | What can I offer that this supplier wants? | Both collection/wishlist directions must match the same partner. Card aliases label the two sides of a potential swap. |
+| Set completion | Which sets am I close to completing? | All catalogue cards establish the denominator; owned distinct cards establish the numerator. Duplicate copies cannot inflate progress. |
+| Unavailable wishes | Which wanted cards cannot be sourced here yet? | NOT EXISTS finds the absence of another user's tradeable stock without dropping wishlist cards that have no collection row. |
+
+R1 uses five tables and four JOIN clauses. R2 uses seven table references but only
+four distinct entities, because it examines both participants' relationships.
+These counts describe the implementation; they are not reasons for adding joins.
+
+Collection-size rankings and a separate username join in a per-user set summary
+are omitted because they do not improve the trading workflow. No CTE or window
+function is required just to make a query appear advanced.
+
+Live plans/results still require a populated MariaDB instance. Query semantics are
+also checked with a small SQLite fixture; that does not prove MariaDB plans or
+performance. Capture actual evidence using the submission checklist.

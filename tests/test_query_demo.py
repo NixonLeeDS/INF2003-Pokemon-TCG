@@ -16,7 +16,7 @@ class QueryDemoTests(unittest.TestCase):
     def test_user_parameter_cannot_be_sql(self):
         with patch.object(query_demo, 'mysql_cursor') as connect:
             with self.assertRaises(ValueError):
-                query_demo.run_query('collection_sets', '1 OR 1=1')
+                query_demo.run_query('trade_matches', '1 OR 1=1')
             connect.assert_not_called()
 
     def test_query_passes_user_as_bound_parameter(self):
@@ -25,7 +25,7 @@ class QueryDemoTests(unittest.TestCase):
         context.__enter__.return_value = (MagicMock(), cur)
         cur.fetchall.return_value = [{'set_id': 'base1', 'owned_copies': 3}]
         with patch.object(query_demo, 'mysql_cursor', return_value=context):
-            rows = query_demo.run_query('collection_sets', '17')
+            rows = query_demo.run_query('trade_matches', '17')
         self.assertEqual(rows, [{'set_id': 'base1', 'owned_copies': 3}])
         self.assertEqual(cur.execute.call_args.args[1], (17,))
 
@@ -77,18 +77,31 @@ class QuerySemanticsTests(unittest.TestCase):
         sql = query_demo.QUERIES[key]['sql'].replace('%s', '?')
         return [dict(row) for row in self.db.execute(sql, (user,))]
 
-    def test_three_joins_preserve_set_identity_and_copy_totals(self):
-        rows = self.run_example('collection_sets')
-        self.assertEqual([(r['set_id'], r['unique_cards'], r['owned_copies'], r['tradeable_copies']) for r in rows],
-                         [('a', 2, 3, 1), ('b', 1, 3, 3)])
-        self.assertEqual(self.run_example('collection_sets', 99), [])
+    def test_suppliers_exclude_self_and_untradeable_stock(self):
+        rows = self.run_example('trade_matches')
+        self.assertEqual([(r['card_id'], r['owner_username'], r['trade_quantity']) for r in rows], [('a2', 'Bob', 1)])
+        self.assertEqual(self.run_example('trade_matches', 99), [])
 
-    def test_rank_ties_and_next_rank(self):
-        rows = self.run_example('rank_sets')
-        self.assertEqual([r['set_rank'] for r in rows], [1, 1])
-        self.db.execute("UPDATE collection_item SET quantity=4 WHERE user_id=1 AND card_id='b1'")
-        rows = self.run_example('rank_sets')
-        self.assertEqual([(r['set_id'], r['set_rank']) for r in rows], [('b', 1), ('a', 2)])
+    def test_reciprocal_match_requires_both_directions(self):
+        self.assertEqual(self.run_example('reciprocal_trade_matches'), [])
+        self.db.execute("INSERT INTO wishlist_item VALUES (2, 'b1', 5)")
+        rows = self.run_example('reciprocal_trade_matches')
+        self.assertEqual([(r['partner_username'], r['you_want_card_id'], r['they_want_card_id']) for r in rows], [('Bob', 'a2', 'b1')])
+        self.db.execute("UPDATE collection_item SET trade_quantity=0 WHERE user_id=1 AND card_id='b1'")
+        self.assertEqual(self.run_example('reciprocal_trade_matches'), [])
+
+    def test_reciprocal_match_does_not_suggest_identical_card_exchange(self):
+        self.db.execute("INSERT INTO wishlist_item VALUES (2, 'a2', 5)")
+        self.db.execute("UPDATE collection_item SET trade_quantity=1 WHERE user_id=1 AND card_id='a2'")
+        self.assertEqual(self.run_example('reciprocal_trade_matches'), [])
+
+    def test_set_completion_counts_unique_cards_and_keeps_set_ids_separate(self):
+        rows = self.run_example('set_completion')
+        self.assertEqual({r['set_id']: (r['owned_unique'], r['set_total'], r['completion_pct']) for r in rows},
+                         {'a': (2, 2, 100.0), 'b': (1, 1, 100.0)})
+        self.db.execute("DELETE FROM collection_item WHERE user_id=1 AND card_id='a2'")
+        rows = self.run_example('set_completion')
+        self.assertEqual(next(r['completion_pct'] for r in rows if r['set_id']=='a'), 50.0)
 
     def test_anti_query_excludes_own_stock_and_untradeable_stock(self):
         rows = self.run_example('unavailable_wishes')

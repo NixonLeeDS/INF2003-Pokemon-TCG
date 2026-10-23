@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from db import mysql_connection, mysql_cursor
+from services.query_demo import run_query
 from services.validation import integer, card_identifier, trade_items, transition
 
 
@@ -141,64 +142,11 @@ def remove_wishlist(user_id, card_id):
 
 
 def trade_matches(user_id):
-    with mysql_cursor() as (_, cur):
-        cur.execute(
-            """
-            SELECT
-                wi.user_id AS seeking_user_id,
-                c.card_id,
-                c.card_name,
-                s.set_name,
-                wi.priority,
-                owner.user_id AS owner_id,
-                owner.username AS owner_username,
-                ci.trade_quantity
-            FROM wishlist_item wi
-            JOIN cards c ON c.card_id = wi.card_id
-            JOIN sets s ON s.set_id = c.set_id
-            JOIN collection_item ci
-              ON ci.card_id = wi.card_id
-             AND ci.trade_quantity > 0
-             AND ci.user_id <> wi.user_id
-            JOIN users owner ON owner.user_id = ci.user_id
-            WHERE wi.user_id = %s
-            ORDER BY wi.priority DESC, c.card_name, owner.username
-            """,
-            (user_id,),
-        )
-        return cur.fetchall()
+    return run_query("trade_matches", user_id)
 
 
 def reciprocal_trade_matches(user_id):
-    with mysql_cursor() as (_, cur):
-        cur.execute(
-            """
-            SELECT DISTINCT
-                partner.user_id AS partner_id,
-                partner.username AS partner_username,
-                wanted.card_id AS you_want_card_id,
-                wanted.card_name AS you_want,
-                offered.card_id AS they_want_card_id,
-                offered.card_name AS they_want
-            FROM wishlist_item my_wish
-            JOIN collection_item partner_has
-              ON partner_has.card_id = my_wish.card_id
-             AND partner_has.trade_quantity > 0
-             AND partner_has.user_id <> my_wish.user_id
-            JOIN users partner ON partner.user_id = partner_has.user_id
-            JOIN cards wanted ON wanted.card_id = my_wish.card_id
-            JOIN wishlist_item partner_wish ON partner_wish.user_id = partner.user_id
-            JOIN collection_item i_have
-              ON i_have.user_id = my_wish.user_id
-             AND i_have.card_id = partner_wish.card_id
-             AND i_have.trade_quantity > 0
-            JOIN cards offered ON offered.card_id = partner_wish.card_id
-            WHERE my_wish.user_id = %s
-            ORDER BY partner.username, wanted.card_name, offered.card_name
-            """,
-            (user_id,),
-        )
-        return cur.fetchall()
+    return run_query("reciprocal_trade_matches", user_id)
 
 
 def create_trade(requester_id, recipient_id, requester_items, recipient_items):
@@ -368,24 +316,8 @@ def collection_summary():
 
 
 def set_completion(user_id):
-    with mysql_cursor() as (_, cur):
-        cur.execute(
-            """
-            SELECT s.set_id, s.set_name,
-                   COUNT(DISTINCT owned.card_id) AS owned_unique,
-                   COUNT(DISTINCT all_cards.card_id) AS set_total,
-                   ROUND(100.0 * COUNT(DISTINCT owned.card_id) / NULLIF(COUNT(DISTINCT all_cards.card_id),0), 2) AS completion_pct
-            FROM sets s
-            JOIN cards all_cards ON all_cards.set_id=s.set_id
-            LEFT JOIN (
-                SELECT ci.card_id
-                FROM collection_item ci
-                WHERE ci.user_id=%s AND ci.quantity>0
-            ) owned ON owned.card_id=all_cards.card_id
-            GROUP BY s.set_id, s.set_name
-            HAVING owned_unique > 0
-            ORDER BY completion_pct DESC, s.set_name
-            """,
-            (user_id,),
-        )
-        return cur.fetchall()
+    return run_query("set_completion", user_id)
+
+
+def unavailable_wishes(user_id):
+    return run_query("unavailable_wishes", user_id)

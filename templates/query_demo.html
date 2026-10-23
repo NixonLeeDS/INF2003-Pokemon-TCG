@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Advanced SQL demonstration</h2>
-<p>Select a seeded user and query to inspect its SQL and current MariaDB results. A three-JOIN query connects four table references; the trade-matching page connects five tables with four JOINs.</p>
+<h2>Application SQL explained</h2>
+<p>Inspect the queries used by Trade Matches and Analytics. Choose a user to see the actual SQL and current results.</p>
 <form method="get" class="grid-form">
 <label>User<select name="user_id">{% for u in all_users %}<option value="{{ u.user_id }}" {% if u.user_id == user_id %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label>
 <label>Query<select name="query">{% for key, q in queries.items() %}<option value="{{ key }}" {% if key == selected %}selected{% endif %}>{{ q.title }}</option>{% endfor %}</select></label>
@@ -15,5 +15,5 @@
 <p>{{ rows|length }} result row(s).</p>
 <table><thead><tr>{% for col in query.columns %}<th>{{ col|replace('_', ' ') }}</th>{% endfor %}</tr></thead>
 <tbody>{% for row in rows %}<tr>{% for col in query.columns %}<td>{{ row[col] }}</td>{% endfor %}</tr>{% else %}<tr><td colspan="{{ query.columns|length }}">No matching rows. Try a seeded user or check their collection and wishlist.</td></tr>{% endfor %}</tbody></table>
-<p>These queries read current data. Collect real outputs and plans using <code>python -m scripts.explain_queries --user-id &lt;id&gt;</code>. CTE/window examples require MariaDB 10.2 or later.</p>
+<p>These queries read current data. Collect real outputs and plans using <code>python -m scripts.explain_queries --user-id &lt;id&gt;</code>.</p>
 {% endblock %}

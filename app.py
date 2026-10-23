@@ -117,7 +117,8 @@ def trade_matches():
     user_id = selected_user_id()
     matches = sql_service.trade_matches(user_id)
     reciprocal = sql_service.reciprocal_trade_matches(user_id)
-    return render_template("trade_matches.html", user_id=user_id, matches=matches, reciprocal=reciprocal)
+    return render_template("trade_matches.html", user_id=user_id, matches=matches, reciprocal=reciprocal,
+                           unavailable=sql_service.unavailable_wishes(user_id))
 
 
 @app.route("/trades", methods=["GET", "POST"])
@@ -149,7 +150,7 @@ def trades():
 def query_demo():
     from services.query_demo import QUERIES, run_query
     user_id = selected_user_id()
-    selected = request.args.get("query", "collection_sets")
+    selected = request.args.get("query", "trade_matches")
     rows = run_query(selected, user_id)
     return render_template("query_demo.html", queries=QUERIES, query=QUERIES[selected],
                            selected=selected, user_id=user_id, rows=rows)

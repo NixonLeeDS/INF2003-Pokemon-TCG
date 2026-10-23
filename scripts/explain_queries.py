@@ -17,13 +17,6 @@ def main():
         queries = {
             'prefix_name': ("SELECT card_id, card_name FROM cards WHERE card_name LIKE %s", ('Pika%',)),
             'contains_name': ("SELECT card_id, card_name FROM cards WHERE card_name LIKE %s", ('%Pika%',)),
-            'trade_match': ("""SELECT wi.card_id, ci.user_id, ci.trade_quantity
-                FROM wishlist_item wi JOIN collection_item ci
-                ON ci.card_id=wi.card_id AND ci.trade_quantity>0 AND ci.user_id<>wi.user_id
-                WHERE wi.user_id=%s""", (args.user_id,)),
-            'rank_collections': ("""SELECT username, total_cards,
-                DENSE_RANK() OVER (ORDER BY total_cards DESC) AS collection_rank
-                FROM user_collection_summary ORDER BY collection_rank, username""", ()),
         }
         queries.update({key: (demo["sql"], (args.user_id,)) for key, demo in QUERIES.items()})
         for label, (query, params) in queries.items():
