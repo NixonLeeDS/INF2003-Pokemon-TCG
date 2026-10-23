@@ -3,28 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
   <title>{% block title %}INF2003 Pokémon TCG{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<header>
-  <h1>Pokémon TCG Collection & Trading</h1>
-  <nav>
-    <a href="{{ url_for('index') }}">Cards</a>
-    <a href="{{ url_for('collection') }}">Collection</a>
-    <a href="{{ url_for('wishlist') }}">Wishlist</a>
-    <a href="{{ url_for('trade_matches') }}">Trade Matches</a>
-    <a href="{{ url_for('trades') }}">Trades</a>
-    <a href="{{ url_for('analytics') }}">Analytics</a>
-  </nav>
+<header class="site-header">
+  <div class="header-shell">
+    <div class="brand">
+      <div class="brand-mark">TCG</div>
+      <div>
+        <h1>Pokémon TCG Collection &amp; Trading</h1>
+        <p>INF2003 Database Systems · Team 40</p>
+      </div>
+    </div>
+    <nav class="main-nav" aria-label="Primary navigation">
+      <a class="{{ 'active' if request.endpoint == 'index' else '' }}" href="{{ url_for('index') }}">Cards</a>
+      <a class="{{ 'active' if request.endpoint == 'collection' else '' }}" href="{{ url_for('collection') }}">Collection</a>
+      <a class="{{ 'active' if request.endpoint == 'wishlist' else '' }}" href="{{ url_for('wishlist') }}">Wishlist</a>
+      <a class="{{ 'active' if request.endpoint == 'trade_matches' else '' }}" href="{{ url_for('trade_matches') }}">Trade Matches</a>
+      <a class="{{ 'active' if request.endpoint == 'trades' else '' }}" href="{{ url_for('trades') }}">Trades</a>
+      <a class="{{ 'active' if request.endpoint == 'analytics' else '' }}" href="{{ url_for('analytics') }}">Analytics</a>
+    </nav>
+  </div>
 </header>
-<main>
+
+<main class="page-shell">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
       <div class="flash {{ category }}">{{ message }}</div>
     {% endfor %}
   {% endwith %}
-  {% block content %}{% endblock %}
+
+  <div class="content-card">
+    {% block content %}{% endblock %}
+  </div>
 </main>
+
+<footer class="site-footer">
+  <div>INF2003 · Pokémon TCG Collection and Trading Management System</div>
+  <div>MariaDB + MongoDB</div>
+</footer>
 </body>
 </html>
