@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Trades</h2>
+<p class="hint">Item format: <code>base1-1:1,base1-2:2</code></p>
+<form method="post" class="grid-form">
+<input type="hidden" name="action" value="create">
+<label>Requester<select name="requester_id">{% for u in all_users %}<option value="{{ u.user_id }}">{{ u.username }}</option>{% endfor %}</select></label>
+<label>Recipient<select name="recipient_id">{% for u in all_users %}<option value="{{ u.user_id }}">{{ u.username }}</option>{% endfor %}</select></label>
+<label>Requester gives<input name="requester_items" placeholder="base1-1:1"></label>
+<label>Recipient gives<input name="recipient_items" placeholder="base1-6:1"></label>
+<button>Create trade</button></form>
+<table><thead><tr><th>ID</th><th>Requester</th><th>Recipient</th><th>Status</th><th>Items</th><th>Actions</th></tr></thead><tbody>{% for t in rows %}<tr><td>{{ t.trade_id }}</td><td>{{ t.requester }}</td><td>{{ t.recipient }}</td><td>{{ t.status }}</td><td>{{ t.item_lines }}</td><td><form method="post" class="actions"><input type="hidden" name="trade_id" value="{{ t.trade_id }}"><button name="action" value="accept">Accept</button><button name="action" value="reject">Reject</button><button name="action" value="cancel">Cancel</button><button name="action" value="complete">Complete</button></form></td></tr>{% endfor %}</tbody></table>
+{% endblock %}
