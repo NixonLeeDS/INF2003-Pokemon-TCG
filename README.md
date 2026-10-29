@@ -286,6 +286,8 @@ INF2003-Pokemon-TCG/
 ## Technical documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [INF2003 course concept mapping](docs/COURSE_REFERENCE_MAPPING.md)
+- [Course reference index](references/README.md)
 - [Database design notes](docs/DESIGN_NOTES.md)
 - [Query catalog](docs/QUERY_CATALOG.md)
 - [ER diagram preview](docs/ERD.svg)
